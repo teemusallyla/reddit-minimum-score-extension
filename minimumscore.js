@@ -11,6 +11,7 @@ function createInput(){
 
     newinput.addEventListener("input", (i) => {
         minScore = Number(i.path[0].value);
+        console.log("Hiding posts with a score below " + minScore);
         hideBelow();
     });
     
