@@ -9,8 +9,8 @@ function createInput(){
     newSpan.innerText = "Hide posts below score: ";
     newinput.type = "number";
 
-    newinput.addEventListener("input", (i) => {
-        minScore = Number(i.path[0].value);
+    newinput.addEventListener("input", () => {
+        minScore = Number(newinput.value);
         console.log("Hiding posts with a score below " + minScore);
         hideBelow();
     });
