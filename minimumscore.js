@@ -56,7 +56,7 @@ function createInputs_desktop(){
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
     newinput.type = "number";
-    newinput.value = minScore;
+    newinput.value = minScore == 0 ? "" : minScore;
 
     newinput.addEventListener("input", () => {
         minScore = Number(newinput.value);
@@ -87,7 +87,7 @@ function createInputs_mobile(){
     newInput.style.width = "70px";
 
     newInput.type = "number";
-    newInput.value = minScore;
+    newInput.value = minScore == 0 ? "" : minScore;
     newInput.addEventListener("input", () => {
         minScore = Number(newInput.value);
         console.log("Hiding posts with a score below " + minScore);
