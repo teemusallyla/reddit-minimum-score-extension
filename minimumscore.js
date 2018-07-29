@@ -1,8 +1,9 @@
-
 var minScore = 0;
 var hideTextPosts = false
 var hideLinkPosts = false
-const mobile = Array.from(document.getElementsByTagName("article")).length > 2 ? true : false;
+const old_times_days = [0, 1, 3, 7, 14, 21, 30, 45]; //days ago
+const old_times_months = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; //months ago
+var show_older_than = 0; //days
 
 function createSelector(hide_function){
     var newSelect = document.createElement("select");
@@ -51,10 +52,34 @@ function createInputs_desktop(){
     var newinput = document.createElement("input");
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
+    var span3 = document.createElement("span");
+    var time_selector = document.createElement("select");
+
+    old_times_days.forEach(time => {
+        var option = document.createElement("option");
+        option.value = time;
+        option.text = time == 1 ? time + " day" : time + " days";
+        time_selector.appendChild(option);
+    });
+
+    old_times_months.forEach(time => {
+        var option = document.createElement("option");
+        option.value = time * 30;
+        option.text = time + " months";
+        time_selector.appendChild(option);
+    })
+
+    time_selector.addEventListener("change", () => {
+        show_older_than = time_selector.value;
+        console.log("Only shoping posts older than " + show_older_than + " days.");
+        hidePosts_desktop();
+    })
     
 
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
+    span3.innerText = " older than ";
+
     newinput.type = "number";
     newinput.value = minScore == 0 ? "" : minScore;
 
@@ -69,6 +94,8 @@ function createInputs_desktop(){
     spacer.appendChild(newinput);
     spacer.appendChild(span2);
     spacer.appendChild(createSelector(hidePosts_desktop));
+    spacer.appendChild(span3);
+    spacer.appendChild(time_selector);
     console.log("Desktop inputs created");
 }
 
@@ -108,7 +135,11 @@ function hidePosts_desktop(){
     Array.from(document.getElementsByClassName("thing")).forEach(link => {
         if (link.dataset.score && link.dataset.domain){
             const textPost = link.dataset.domain.includes("self.") ? true : false;
-            if (Number(link.dataset.score) < Number(minScore) || (textPost && hideTextPosts) || (!textPost && hideLinkPosts)){
+            var post_time = new Date();
+            const now = new Date();
+            post_time.setTime(link.dataset.timestamp);
+            var too_new = now - post_time < Number(show_older_than) * 24 * 60 * 60 * 1000;
+            if (Number(link.dataset.score) < Number(minScore) || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || too_new){
                 link.style.display = "none";
             } else {
                 link.style.display = "";
