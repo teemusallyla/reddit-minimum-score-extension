@@ -1,9 +1,34 @@
 var minScore = 0;
 var hideTextPosts = false
 var hideLinkPosts = false
+var type_selector_value = "all";
 const old_times_days = [0, 1, 3, 7, 14, 21, 30, 45]; //days ago
 const old_times_months = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; //months ago
 var show_older_than = 0; //days
+
+var url = window.location.href;
+if (url.includes("?")){
+    var params = new Map(url.split("?").pop().split("&").map(i => i.split("=")));
+    minScore = params.get("minScore") || 0;
+    show_older_than = params.get("minAge") || 0;
+    if (params.has("showTypes")){
+        switch(params.get("showTypes")){
+            case "text":
+                type_selector_value = "text";
+                hideLinkPosts = true;
+                break;
+            case "link":
+                type_selector_value = "link";
+                hideTextPosts = true;
+                break;
+            default:
+                hideTextPosts = false;
+                hideLinkPosts = false;
+                type_selector_value = "all";
+                break;
+        }
+    }
+}
 
 function createSelector(hide_function){
     var newSelect = document.createElement("select");
@@ -27,18 +52,21 @@ function createSelector(hide_function){
             case "all":
                 hideTextPosts = false;
                 hideLinkPosts = false;
+                type_selector_value = "all";
                 console.log("Showing all posts");
                 hide_function();
                 break;
             case "text":
                 hideTextPosts = false;
                 hideLinkPosts = true;
+                type_selector_value = "text";
                 console.log("Showing text posts only");
                 hide_function();
                 break;
             case "link":
                 hideTextPosts = true;
                 hideLinkPosts = false;
+                type_selector_value = "link";
                 console.log("Showing links only");
                 hide_function();
                 break;
@@ -49,11 +77,15 @@ function createSelector(hide_function){
 }
 
 function createInputs_desktop(){
+    var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
     var newinput = document.createElement("input");
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
     var span3 = document.createElement("span");
     var time_selector = document.createElement("select");
+    var type_selector = createSelector(hidePosts_desktop);
+
+    type_selector.value = type_selector_value;
 
     old_times_days.forEach(time => {
         var option = document.createElement("option");
@@ -68,6 +100,8 @@ function createInputs_desktop(){
         option.text = time + " months";
         time_selector.appendChild(option);
     })
+
+    time_selector.value = show_older_than;
 
     time_selector.addEventListener("change", () => {
         show_older_than = time_selector.value;
@@ -89,17 +123,17 @@ function createInputs_desktop(){
         hidePosts_desktop();
     });
 
-    var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
     spacer.appendChild(span1);
     spacer.appendChild(newinput);
     spacer.appendChild(span2);
-    spacer.appendChild(createSelector(hidePosts_desktop));
+    spacer.appendChild(type_selector);
     spacer.appendChild(span3);
     spacer.appendChild(time_selector);
     console.log("Desktop inputs created");
 }
 
 function createInputs_mobile(){
+    var postsList = document.getElementsByClassName("PostsList")[0];
     var newDiv = document.createElement("div");
     var newInput = document.createElement("input");
     var span1 = document.createElement("span");
@@ -127,18 +161,33 @@ function createInputs_mobile(){
     newDiv.appendChild(span2);
     newDiv.appendChild(newSelect);
 
-    var postsList = document.getElementsByClassName("PostsList")[0];
     postsList.parentElement.insertBefore(newDiv, postsList);
+}
+
+function addParams(url, params){
+    if (!url.includes("?")) {
+        url += "?";
+        params.forEach(pair => url += pair[0] + "=" + pair[1] + "&");
+        return url.slice(0, -1);
+    } else {
+        var base_url = url.split("?").shift();
+        return_url = base_url + "?";
+        var params_before = new Map(url.split("?").pop().split("&").filter(i => !!i).map(i => i.split("=")));
+        params.forEach(pair => params_before.set(pair[0], pair[1]));
+        for (key of params_before.keys()){
+            return_url += key + "=" + params_before.get(key) + "&";
+        }
+        return return_url.slice(0, -1);
+    }
 }
 
 function hidePosts_desktop(){
     Array.from(document.getElementsByClassName("thing")).forEach(link => {
         if (link.dataset.score && link.dataset.domain){
             const textPost = link.dataset.domain.includes("self.") ? true : false;
-            var post_time = new Date();
+            const post_time = new Date((new Date()).setTime(link.dataset.timestamp));
             const now = new Date();
-            post_time.setTime(link.dataset.timestamp);
-            var too_new = now - post_time < Number(show_older_than) * 24 * 60 * 60 * 1000;
+            const too_new = now - post_time < Number(show_older_than) * 24 * 60 * 60 * 1000;
             if (Number(link.dataset.score) < Number(minScore) || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || too_new){
                 link.style.display = "none";
             } else {
@@ -146,6 +195,20 @@ function hidePosts_desktop(){
             }
         }
     });
+    var next_a = document.getElementsByClassName("next-button")[0].firstChild;
+    var prev_a = null;
+    try {
+        prev_a = document.getElementsByClassName("prev-button")[0].firstChild;
+    } catch(TypeError){}
+    var params = [
+        ["minScore", minScore],
+        ["minAge", show_older_than],
+        ["showTypes", type_selector_value]
+    ];
+    next_a.href = addParams(next_a.href, params);
+    if (prev_a){
+        prev_a.href = addParams(prev_a.href, params);
+    }
 }
 
 function hidePosts_mobile(){
@@ -154,8 +217,8 @@ function hidePosts_mobile(){
         if (isNaN(score)){
             score = 1;
         }
-        var textPost = Array.from(article.getElementsByClassName("PostHeader__author-link")).length > 1 ? false : true;
-        var isAd = Array.from(article.getElementsByClassName("PostHeader__promoted-flair")).length > 0 ? true : false;
+        var textPost = Array.from(article.getElementsByClassName("PostHeader__author-link")).length < 2;
+        var isAd = Array.from(article.getElementsByClassName("PostHeader__promoted-flair")).length > 0;
         if (score < minScore || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || isAd){
             article.style.display = "none";
         } else {
