@@ -77,7 +77,11 @@ function createSelector(hide_function){
 }
 
 function createInputs_desktop(){
-    var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
+    //var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
+    var spacer = document.createElement("div");
+    var siteTable = document.getElementById("siteTable");
+    siteTable.parentElement.insertBefore(spacer, siteTable);
+    spacer.style.margin = "0px 0px 10px 8px";
     var newinput = document.createElement("input");
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
