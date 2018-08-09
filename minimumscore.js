@@ -1,7 +1,8 @@
 var minScore = 0;
-var hideTextPosts = false
-var hideLinkPosts = false
+var hideTextPosts = false;
+var hideLinkPosts = false;
 var type_selector_value = "all";
+var show_nsfw = true;
 const old_times_days = [0, 1, 3, 7, 14, 21, 30, 45]; //days ago
 const old_times_months = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; //months ago
 var show_older_than = 0; //days
@@ -11,6 +12,7 @@ if (url.includes("?")){
     var params = new Map(url.split("?").pop().split("&").map(i => i.split("=")));
     minScore = params.get("minScore") || 0;
     show_older_than = params.get("minAge") || 0;
+    show_nsfw = params.get("showNsfw") == "true";
     if (params.has("showTypes")){
         switch(params.get("showTypes")){
             case "text":
@@ -86,8 +88,10 @@ function createInputs_desktop(){
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
     var span3 = document.createElement("span");
+    var span4 = document.createElement("span");
     var time_selector = document.createElement("select");
     var type_selector = createSelector(hidePosts_desktop);
+    var nsfw_toggle = document.createElement("input");
 
     type_selector.value = type_selector_value;
 
@@ -117,6 +121,7 @@ function createInputs_desktop(){
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
     span3.innerText = " older than ";
+    span4.innerText = " Show nsfw: ";
 
     newinput.type = "number";
     newinput.value = minScore == 0 ? "" : minScore;
@@ -127,12 +132,25 @@ function createInputs_desktop(){
         hidePosts_desktop();
     });
 
+    nsfw_toggle.type = "checkbox";
+    nsfw_toggle.checked = show_nsfw;
+
+    nsfw_toggle.addEventListener("change", () => {
+        show_nsfw = nsfw_toggle.checked;
+        show_nsfw ? console.log("Showing nsfw posts") : console.log("Hiding nsfw posts");
+        hidePosts_desktop();
+    });
+
+    
+
     spacer.appendChild(span1);
     spacer.appendChild(newinput);
     spacer.appendChild(span2);
     spacer.appendChild(type_selector);
     spacer.appendChild(span3);
     spacer.appendChild(time_selector);
+    spacer.appendChild(span4);
+    spacer.appendChild(nsfw_toggle);
     console.log("Desktop inputs created");
 }
 
@@ -192,7 +210,9 @@ function hidePosts_desktop(){
             const post_time = new Date((new Date()).setTime(link.dataset.timestamp));
             const now = new Date();
             const too_new = now - post_time < Number(show_older_than) * 24 * 60 * 60 * 1000;
-            if (Number(link.dataset.score) < Number(minScore) || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || too_new){
+            const is_nsfw = link.dataset.nsfw == "true";
+            if (Number(link.dataset.score) < Number(minScore) || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || too_new
+                || (is_nsfw && !show_nsfw)){
                 link.style.display = "none";
             } else {
                 link.style.display = "";
@@ -207,7 +227,8 @@ function hidePosts_desktop(){
     var params = [
         ["minScore", minScore],
         ["minAge", show_older_than],
-        ["showTypes", type_selector_value]
+        ["showTypes", type_selector_value],
+        ["showNsfw", show_nsfw]
     ];
     next_a.href = addParams(next_a.href, params);
     if (prev_a){
