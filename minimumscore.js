@@ -88,10 +88,10 @@ function createInputs_desktop(){
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
     var span3 = document.createElement("span");
-    var span4 = document.createElement("span");
     var time_selector = document.createElement("select");
     var type_selector = createSelector(hidePosts_desktop);
     var nsfw_toggle = document.createElement("input");
+    var nsfw_label = document.createElement("label");
 
     type_selector.value = type_selector_value;
 
@@ -121,7 +121,7 @@ function createInputs_desktop(){
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
     span3.innerText = " older than ";
-    span4.innerText = " Show nsfw: ";
+    nsfw_label.innerText = " Show nsfw: ";
 
     newinput.type = "number";
     newinput.value = minScore == 0 ? "" : minScore;
@@ -149,8 +149,8 @@ function createInputs_desktop(){
     spacer.appendChild(type_selector);
     spacer.appendChild(span3);
     spacer.appendChild(time_selector);
-    spacer.appendChild(span4);
-    spacer.appendChild(nsfw_toggle);
+    nsfw_label.appendChild(nsfw_toggle);
+    spacer.appendChild(nsfw_label);
     console.log("Desktop inputs created");
 }
 
