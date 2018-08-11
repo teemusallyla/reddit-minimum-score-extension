@@ -125,6 +125,7 @@ function createInputs_desktop(){
 
     newinput.type = "number";
     newinput.value = minScore == 0 ? "" : minScore;
+    newinput.style.width = "70px";
 
     newinput.addEventListener("input", () => {
         minScore = Number(newinput.value);
@@ -161,13 +162,28 @@ function createInputs_mobile(){
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
     var newSelect = createSelector(hidePosts_mobile);
-    var br = document.createElement("br");
+    var br1 = document.createElement("br");
+    var br2 = document.createElement("br");
+    var nsfw_check = document.createElement("input");
+    var nsfw_label = document.createElement("label");
 
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
     newDiv.style.margin = "8px 10px";
     newDiv.id = "min-score-div";
     newInput.style.width = "70px";
+    newSelect.value = type_selector_value;
+
+    nsfw_label.innerText = "Show nsfw: ";
+    nsfw_check.type = "checkbox";
+    nsfw_check.checked = show_nsfw;
+
+    nsfw_check.addEventListener("change", () => {
+        show_nsfw = nsfw_check.checked;
+        show_nsfw ? console.log("Showing nsfw posts") : console.log("Hiding nsfw posts");
+        hidePosts_mobile();
+    });
+    nsfw_label.appendChild(nsfw_check);
 
     newInput.type = "number";
     newInput.value = minScore == 0 ? "" : minScore;
@@ -179,9 +195,11 @@ function createInputs_mobile(){
 
     newDiv.appendChild(span1);
     newDiv.appendChild(newInput);
-    newDiv.appendChild(br);
+    newDiv.appendChild(br1);
     newDiv.appendChild(span2);
     newDiv.appendChild(newSelect);
+    newDiv.appendChild(br2);
+    newDiv.appendChild(nsfw_label);
 
     postsList.parentElement.insertBefore(newDiv, postsList);
 }
@@ -244,7 +262,8 @@ function hidePosts_mobile(){
         }
         var textPost = Array.from(article.getElementsByClassName("PostHeader__author-link")).length < 2;
         var isAd = Array.from(article.getElementsByClassName("PostHeader__promoted-flair")).length > 0;
-        if (score < minScore || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || isAd){
+        var isNsfw = Array.from(article.getElementsByClassName("PostHeader__nsfw-text")).length > 0;
+        if (score < minScore || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || isAd || (isNsfw && !show_nsfw)){
             article.style.display = "none";
         } else {
             article.style.display = "";
