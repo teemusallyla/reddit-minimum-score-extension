@@ -12,7 +12,9 @@ if (url.includes("?")){
     var params = new Map(url.split("?").pop().split("&").map(i => i.split("=")));
     minScore = params.get("minScore") || 0;
     show_older_than = params.get("minAge") || 0;
-    show_nsfw = params.has("showNsfw") && params.get("showNsfw") == "true";
+    if (params.has("showNsfw")){
+        show_nsfw = params.get("showNsfw") == "true";
+    }
     if (params.has("showTypes")){
         switch(params.get("showTypes")){
             case "text":
@@ -275,7 +277,7 @@ function hidePosts_mobile(){
         var textPost = Array.from(article.getElementsByClassName("PostHeader__author-link")).length < 2;
         var isAd = Array.from(article.getElementsByClassName("PostHeader__promoted-flair")).length > 0;
         var isNsfw = Array.from(article.getElementsByClassName("PostHeader__nsfw-text")).length > 0;
-        var time_diff = 0;
+        var time_diff = 1;
         var time_list = Array.from(article.getElementsByClassName("PostHeader__author-link"));
         var time_text = "";
         if (time_list.length > 0) {
