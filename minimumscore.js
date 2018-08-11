@@ -12,7 +12,7 @@ if (url.includes("?")){
     var params = new Map(url.split("?").pop().split("&").map(i => i.split("=")));
     minScore = params.get("minScore") || 0;
     show_older_than = params.get("minAge") || 0;
-    show_nsfw = params.get("showNsfw") == "true";
+    show_nsfw = params.has("showNsfw") && params.get("showNsfw") == "true";
     if (params.has("showTypes")){
         switch(params.get("showTypes")){
             case "text":
@@ -78,22 +78,8 @@ function createSelector(hide_function){
     return newSelect;
 }
 
-function createInputs_desktop(){
-    //var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
-    var spacer = document.createElement("div");
-    var siteTable = document.getElementById("siteTable");
-    siteTable.parentElement.insertBefore(spacer, siteTable);
-    spacer.style.margin = "0px 0px 10px 8px";
-    var newinput = document.createElement("input");
-    var span1 = document.createElement("span");
-    var span2 = document.createElement("span");
-    var span3 = document.createElement("span");
+function createTimeSelector(hide_function){
     var time_selector = document.createElement("select");
-    var type_selector = createSelector(hidePosts_desktop);
-    var nsfw_toggle = document.createElement("input");
-    var nsfw_label = document.createElement("label");
-
-    type_selector.value = type_selector_value;
 
     old_times_days.forEach(time => {
         var option = document.createElement("option");
@@ -107,16 +93,35 @@ function createInputs_desktop(){
         option.value = time * 30;
         option.text = time + " months";
         time_selector.appendChild(option);
-    })
-
-    time_selector.value = show_older_than;
+    });
 
     time_selector.addEventListener("change", () => {
         show_older_than = time_selector.value;
         console.log("Only shoping posts older than " + show_older_than + " days.");
-        hidePosts_desktop();
-    })
-    
+        hide_function();
+    });
+
+    return time_selector;
+
+}
+
+function createInputs_desktop(){
+    //var spacer = Array.from(document.getElementsByClassName("content")).filter(i => i.tagName == "DIV")[0].getElementsByClassName("spacer")[0];
+    var spacer = document.createElement("div");
+    var siteTable = document.getElementById("siteTable");
+    siteTable.parentElement.insertBefore(spacer, siteTable);
+    spacer.style.margin = "0px 0px 10px 8px";
+    var newinput = document.createElement("input");
+    var span1 = document.createElement("span");
+    var span2 = document.createElement("span");
+    var span3 = document.createElement("span");
+    var time_selector = createTimeSelector(hidePosts_desktop);
+    var type_selector = createSelector(hidePosts_desktop);
+    var nsfw_toggle = document.createElement("input");
+    var nsfw_label = document.createElement("label");
+
+    type_selector.value = type_selector_value;
+    time_selector.value = show_older_than;
 
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
@@ -161,14 +166,19 @@ function createInputs_mobile(){
     var newInput = document.createElement("input");
     var span1 = document.createElement("span");
     var span2 = document.createElement("span");
+    var span3 = document.createElement("span");
     var newSelect = createSelector(hidePosts_mobile);
     var br1 = document.createElement("br");
     var br2 = document.createElement("br");
     var nsfw_check = document.createElement("input");
     var nsfw_label = document.createElement("label");
+    var time_selector = createTimeSelector(hidePosts_mobile);
+
+    time_selector.value = show_older_than;
 
     span1.innerText = "Hide posts below score: ";
     span2.innerText = " Show ";
+    span3.innerText = " older than ";
     newDiv.style.margin = "8px 10px";
     newDiv.id = "min-score-div";
     newInput.style.width = "70px";
@@ -198,6 +208,8 @@ function createInputs_mobile(){
     newDiv.appendChild(br1);
     newDiv.appendChild(span2);
     newDiv.appendChild(newSelect);
+    newDiv.appendChild(span3);
+    newDiv.appendChild(time_selector);
     newDiv.appendChild(br2);
     newDiv.appendChild(nsfw_label);
 
@@ -263,7 +275,34 @@ function hidePosts_mobile(){
         var textPost = Array.from(article.getElementsByClassName("PostHeader__author-link")).length < 2;
         var isAd = Array.from(article.getElementsByClassName("PostHeader__promoted-flair")).length > 0;
         var isNsfw = Array.from(article.getElementsByClassName("PostHeader__nsfw-text")).length > 0;
-        if (score < minScore || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || isAd || (isNsfw && !show_nsfw)){
+        var time_diff = 0;
+        var time_list = Array.from(article.getElementsByClassName("PostHeader__author-link"));
+        var time_text = "";
+        if (time_list.length > 0) {
+            time_text = time_list.pop().parentElement.innerText.split("u/")[0];
+        }
+        var time_letter = time_text.slice(-1);
+        var time_value = Number(time_text.slice(0, -1));
+        switch(time_letter){
+            case "m":
+                time_diff = time_value * 60 * 1000;
+                break;
+            case "h":
+                time_diff = time_value * 60 * 60 * 1000;
+                break;
+            case "d":
+                time_diff = time_value * 24 * 60 * 60 * 1000;
+                break;
+            case "w":
+                time_diff = time_value * 7 * 24 * 60 * 60 * 1000;
+                break;
+            case "y":
+                time_diff = time_value * 365 * 24 * 60 * 60 * 1000;
+                break;
+        }
+
+        if (score < minScore || (textPost && hideTextPosts) || (!textPost && hideLinkPosts) || isAd || (isNsfw && !show_nsfw)
+            || time_diff < show_older_than * 24 * 60 * 60 * 1000){
             article.style.display = "none";
         } else {
             article.style.display = "";
